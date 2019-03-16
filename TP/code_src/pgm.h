@@ -41,7 +41,7 @@ unsigned char** crop(unsigned char **im,int oi, int oj, int fi, int fj);
 int fft( double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag , int nl, int nc);
 int ifft( double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag , int nl,int nc);
 
-void fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int nl, int nc );
+int fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int nl, int nc );
 int nextpow2( double num );
 int ispowerof2(double num);
 double** padimdforfft(double** im, int* pnl, int* pnc);
@@ -51,6 +51,16 @@ double eqm(unsigned char **im1, unsigned char **im2,  int nl, int nc);
 double psnr(unsigned char **im1, unsigned char **im2,  int nl, int nc) ;
 double psnr_double(double** r, double** i, int nl, int nc);
 double eqm_double(double** r, double** i, int nl, int nc);
+
+
+double** fftFiltreGaussien(double variance, int nl, int nc);
+void filtrageGaussienImg(double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag , double variance, int dimx, int dimy);
+double** cgims(double** ims, int dimMask, double resLissage, int dimx, int dimy);
+double cgimsLocal(double** ims, int posx, int posy, double resLissage, int dimMask, int dimx, int dimy);
+double *PsnrFiltreGaussien(double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag, int dimx, int dimy);
+double* eqmConv(double variance, double** ims, int dimx, int dimy);
+void eqmTotal(double** ims1, double** ims2, int dimx, int dimy, int dimx2, int dimy2);
+void printEqm(double* eqmData);
 
 
 double** norme(double** real, double** imag, int nl, int nc);

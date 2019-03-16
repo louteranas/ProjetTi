@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "pgm.h"
+#include "divers.c"
 
 
 #define SWAP(a,b) { tempr=(a);(a)=(b);(b)=tempr; }
@@ -12,14 +13,14 @@ static int fournFFT( double *data, long nn[], int ndim, int direct) {  // Direct
    unsigned long ibit,k1,k2,n,nprev,nrem,ntot;
    double tempi,tempr;
    double theta,wi,wpi,wpr,wr,wtemp;
-   
+
   if (direct!=1 && direct!=-1) return -1;
 
    // Total number of complex values.
    for (ntot=1,idim=0;idim<ndim;idim++)
       ntot *= nn[idim];
    --data;// Due to Numerical Recipies algorithm implementation :: array[1...n];
-   
+
    nprev=1;
    // main loop over dimensions.
 
@@ -30,7 +31,7 @@ static int fournFFT( double *data, long nn[], int ndim, int direct) {  // Direct
       ip2=ip1*n;
       ip3=ip2*nrem;
       i2rev=1;
-      
+
       for (i2=1;i2<=ip2;i2+=ip1) { // Bit reversal section of the routine.
 	 if (i2 < i2rev) {
 	    for (i1=i2;i1<=i2+ip1-2;i1+=2) {
@@ -49,7 +50,7 @@ static int fournFFT( double *data, long nn[], int ndim, int direct) {  // Direct
 	 i2rev += ibit;
       }
       ifp1=ip1;
-      
+
       while (ifp1 < ip2) {
 	 ifp2=ifp1 << 1;
 	 theta=direct*(M_PI*2)/(ifp2/ip1); // isign = +1 for transform
@@ -78,8 +79,8 @@ static int fournFFT( double *data, long nn[], int ndim, int direct) {  // Direct
       }
       nprev *= n;
    }
-   
-   return 1; 
+
+   return 1;
 }
 
 #undef SWAP
@@ -111,7 +112,7 @@ static int allfft( double** ims_reel, double** ims_imag, double** imd_reel, doub
    nn[1] = dimy;
    n= 2;
    data=pf=(double*)calloc(2*dimx*dimy,sizeof(double));
-   if (!data) { printf("Erreru allocation\n"); return -1; } 
+   if (!data) { printf("Erreru allocation\n"); return -1; }
    for (y=0; y<dimy; y++) {
       for (x=0;x<dimx;x++) {
          *(pf++) = (double)ims_reel[y][x];
@@ -120,13 +121,13 @@ static int allfft( double** ims_reel, double** ims_imag, double** imd_reel, doub
       pf+=2*(nn[0]-x);
     }
    pf+=2*((nn[1]-y)*nn[0]);
-   
+
    fournFFT(data,nn,n,direct);
    pf=data;
-   
+
    // Build outputs images.
    for (y=0; y<dimy; y++) {
-     for (x=0;x<dimx; x++) 
+     for (x=0;x<dimx; x++)
         if (direct==1) { imd_reel[y][x]= *(pf++); imd_imag[y][x]= *(pf++); }
         else { imd_reel[y][x]= *(pf++)/(nn[0]*nn[1]); imd_imag[y][x]= *(pf++)/(nn[0]*nn[1]); }
 	 // Discard those points.
@@ -151,7 +152,7 @@ int ifft( double** ims_reel, double** ims_imag, double** imd_reel, double** imd_
 
 
 /* Shift les cadres de ims (reeel et imag) dans imd reeel et imaghinaire) */
-void fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int nl, int nc ) {
+int fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int nl, int nc ) {
    int midx =nc >> 1;
    int midy = nl >> 1;
    int finx, finy;
@@ -167,7 +168,7 @@ void fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int n
 	 imdr[y][x] = imsr[y+midy][x+midx];
 	 imdi[y][x] = imsi[y+midy][x+midx];
       }
-   
+
    // Cadre 2 -> Cadre 4.
    for (y=0; y < finy; y++)
       for ( x=finx; x < nc; x++) {
@@ -175,7 +176,7 @@ void fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int n
 	 imdi[y][x] = imsi[y+midy][x-finx];
       }
 
-   
+
    // Cadre 3 -> cadre 2.
    for (y=finy ; y< nl; y++)
       for ( x=0; x < finx; x++) {
@@ -189,12 +190,13 @@ void fftshift( double** imsr, double** imsi, double** imdr, double** imdi, int n
 	 imdr[y][x] = imsr[y-finy][x-finx];
 	 imdi[y][x] = imsi[y-finy][x-finx];
       }
+    return 1;
  }
 
 double** padimdforfft(double** im, int* pnl, int* pnc) {
   if (ispowerof2(*pnl) && ispowerof2(*pnc)) return im;
   else { double** res=NULL; int i,j,anl=*pnl,anc=*pnc;
-    *pnl=nextpow2(*pnl); *pnc=nextpow2(*pnc); 
+    *pnl=nextpow2(*pnl); *pnc=nextpow2(*pnc);
     if( (res=alloue_image_double(*pnl,*pnc))==NULL) return NULL;
     for (i=0; i<anl; i++) for(j=0;j<anc; j++) res[i][j]=im[i][j];
     return res;
@@ -203,7 +205,7 @@ double** padimdforfft(double** im, int* pnl, int* pnc) {
 
 double** padimucforfft(unsigned char** im, int* pnl, int* pnc) {
   double** res=NULL; int i,j,anl=*pnl,anc=*pnc;
-  *pnl=nextpow2(*pnl); *pnc=nextpow2(*pnc); 
+  *pnl=nextpow2(*pnl); *pnc=nextpow2(*pnc);
   if( (res=alloue_image_double(*pnl,*pnc))==NULL) return NULL;
   for (i=0; i<anl; i++) for(j=0;j<anc; j++) res[i][j]=im[i][j];
   return res;
@@ -211,7 +213,7 @@ double** padimucforfft(unsigned char** im, int* pnl, int* pnc) {
 
 double** padimd(double** im, int nl, int nc, int anl, int anc) { int i,j;
   double **res;
-  if( (res=alloue_image_double(nl,nc))==NULL) return NULL; 
+  if( (res=alloue_image_double(nl,nc))==NULL) return NULL;
   for (i=0; i<anl; i++) for(j=0;j<anc; j++) res[i][j]=im[i][j];
      return res;
 }
@@ -244,3 +246,156 @@ double** hamming_uc(unsigned char** im, int  nl, int nc){ int i,j;
    return res;
 }
 
+double** fftFiltreGaussien(double variance, int nl, int nc){
+    double** fftFiltre = alloue_image_double(nl,nc);
+    for(int u = 0; u<nl; u++){
+        for(int v = 0; v<nc; v++){
+            double norm = pow(((u - nl/2)/(double)nl), 2) + pow(((v - nc/2)/(double)nc), 2);
+            fftFiltre[u][v] = exp(-2*pow(3.14, 2)*pow(variance, 2)*norm);
+        }
+    }
+
+    return fftFiltre;
+}
+
+
+void filtrageGaussienImg(double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag , double variance, int dimx, int dimy){
+    double ** tfImage_reel = alloue_image_double(dimx, dimy);
+    double ** tfImage_imag = alloue_image_double(dimx, dimy);
+
+    double ** shiftTfImage_reel = alloue_image_double(dimx, dimy);
+    double ** shiftTfImage_imag = alloue_image_double(dimx, dimy);
+
+    double ** produit_reel = alloue_image_double(dimx, dimy);
+    double ** produit_imag = alloue_image_double(dimx, dimy);
+
+    double ** shiftProduit_reel = alloue_image_double(dimx, dimy);
+    double ** shiftProduit_imag = alloue_image_double(dimx, dimy);
+
+    if(!fft(ims_reel, ims_imag, tfImage_reel, tfImage_imag , dimx, dimy)){
+      printf("erreur de FFT");
+    };
+    if(!fftshift(tfImage_reel, tfImage_imag, shiftTfImage_reel, shiftTfImage_imag, dimx, dimy)){
+      printf("erreur du premier shift");
+    };
+
+    double ** filtre = fftFiltreGaussien(variance, dimx, dimy);
+
+    for(int u = 0; u<dimx; u++){
+        for(int v = 0; v<dimy; v++){
+            produit_reel[u][v] = filtre[u][v]*shiftTfImage_reel[u][v];
+            produit_imag[u][v] = filtre[u][v]*shiftTfImage_imag[u][v];
+        }
+    }
+
+    if(!fftshift(produit_reel, produit_imag, shiftProduit_reel, shiftProduit_imag, dimx, dimy)){
+      printf("erreur du deuxieme shift");
+    };
+
+    if(!ifft(shiftProduit_reel, shiftProduit_imag, imd_reel, imd_imag, dimx, dimy)){
+      printf("erreur de IFFT");
+    };
+    free(tfImage_reel);
+    free(tfImage_imag);
+    free(shiftTfImage_reel);
+    free(shiftTfImage_imag);
+    free(produit_reel);
+    free(produit_imag);
+    free(shiftProduit_reel);
+    free(shiftProduit_imag);
+}
+
+double *PsnrFiltreGaussien(double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag, int dimx, int dimy){
+  double* output = NULL;
+  output = malloc(40*sizeof(double));
+  int comp = 0;
+  for(double variance = 1; variance < 20; variance+=0.5){
+    filtrageGaussienImg(ims_reel, ims_imag, imd_reel, imd_imag , variance, dimx, dimy);
+    output[comp] = psnr_double(ims_reel, imd_reel, dimx, dimy);
+    printf("%f\n", output[comp]);
+    comp+=1;
+  }
+  return output;
+}
+
+double cgimsLocal(double** ims, int posx, int posy, double resLissage, int dimMask, int dimx, int dimy){
+  double frac = (1/(2*3.14*pow(resLissage, 2)));
+  double somme1 = 0;
+  for(int i = -dimMask; i < dimMask; i++){
+    double somme0 = 0;
+    for(int j = -dimMask; j < dimMask; j++){
+      somme0 += exp(-pow(j/resLissage,2) / 2) * ims[(posx + i + dimx) % dimx][(posy +j+ dimy) % dimy];
+    }
+    somme1 += somme0 * exp(-pow(i/resLissage,2) / 2);
+  }
+  return(somme1*frac);
+}
+
+double** cgims(double** ims, int dimMask, double resLissage, int dimx, int dimy){
+  double** output = NULL;
+  output=alloue_image_double(dimx,dimy);
+  for(int x = 0; x <dimx; x++){
+    for(int y = 0; y <dimy; y++){
+      output[x][y] = cgimsLocal(ims, x, y, resLissage, dimMask, dimx, dimy);
+    }
+  }
+  return output;
+}
+
+double* eqmConv(double variance, double** ims, int dimx, int dimy) {
+  double dimMask;
+  double* eqmData = NULL;
+  eqmData = malloc(6 * sizeof(double));
+  double** imsi = alloue_image_double(dimx, dimy);
+  double** im1 = alloue_image_double(dimx, dimy);
+  double** im1i = alloue_image_double(dimx, dimy);
+
+  filtrageGaussienImg(ims, imsi, im1, im1i , variance, dimx, dimy);
+  double** im2 = NULL;
+  for(int i = 1; i<=6; i++) {
+    dimMask = i * variance;
+    im2 = cgims(ims, dimMask, variance, dimx, dimy);
+    eqmData[i-1] = eqm_double(im1, im2, dimx, dimy);
+  }
+  free(imsi);
+  free(im1);
+  free(im1i);
+  return eqmData;
+}
+
+void eqmTotal(double** ims1, double** ims2, int dimx, int dimy, int dimx2, int dimy2) {
+  double* eqmData = NULL;
+  eqmData = eqmConv(1, ims1, dimx, dimy);
+  printf("Im1 => var = 1 : \n");
+  printEqm(eqmData);
+  eqmData = eqmConv(5, ims1, dimx, dimy);
+  printf("Im1 => var = 5 : \n");
+  printEqm(eqmData);
+  eqmData = eqmConv(10, ims1, dimx, dimy);
+  printf("Im1 => var = 10 : \n");
+  printEqm(eqmData);
+  eqmData = eqmConv(20, ims1, dimx, dimy);
+  printf("Im1 => var = 20 : \n");
+  printEqm(eqmData);
+
+  printf("\n");
+  eqmData = eqmConv(1, ims2, dimx2, dimy2);
+  printf("Im2 => var = 1 : \n");
+  printEqm(eqmData);
+  eqmData = eqmConv(5, ims2, dimx2, dimy2);
+  printf("Im2 => var = 5 : \n");
+  printEqm(eqmData);
+  eqmData = eqmConv(10, ims2, dimx2, dimy2);
+  printf("Im2 => var = 10 : \n");
+  printEqm(eqmData);
+  eqmData = eqmConv(20, ims2, dimx2, dimy2);
+  printf("Im2 => var = 20 : \n");
+  printEqm(eqmData);
+}
+
+void printEqm(double* eqmData) {
+  for(int i = 0; i < 6; i++) {
+    printf("%f\n", eqmData[i]);
+  }
+  printf("\n");
+}
