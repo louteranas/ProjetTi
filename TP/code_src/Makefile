@@ -9,8 +9,11 @@ essai2: essai2.o pgm.o fft.o
 
 testGaussien: testGaussien.o pgm.o fft.o
 		gcc $^ $(LDFLAGS) -o $@
-		
+
 testConvolution: testConvolution.o pgm.o fft.o
+		gcc $^ $(LDFLAGS) -o $@
+
+gradient: gradient.o pgm.o fft.o
 		gcc $^ $(LDFLAGS) -o $@
 
 %.o:%.c

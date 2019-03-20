@@ -4,6 +4,7 @@
 #include "pgm.h"
 #include "divers.c"
 
+#define PI 3.14159265
 
 #define SWAP(a,b) { tempr=(a);(a)=(b);(b)=tempr; }
 
@@ -251,7 +252,7 @@ double** fftFiltreGaussien(double variance, int nl, int nc){
     for(int u = 0; u<nl; u++){
         for(int v = 0; v<nc; v++){
             double norm = pow(((u - nl/2)/(double)nl), 2) + pow(((v - nc/2)/(double)nc), 2);
-            fftFiltre[u][v] = exp(-2*pow(3.14, 2)*pow(variance, 2)*norm);
+            fftFiltre[u][v] = exp(-2*pow(PI, 2)*pow(variance, 2)*norm);
         }
     }
 
@@ -319,7 +320,7 @@ double *PsnrFiltreGaussien(double** ims_reel, double** ims_imag, double** imd_re
 }
 
 double cgimsLocal(double** ims, int posx, int posy, double resLissage, int dimMask, int dimx, int dimy){
-  double frac = (1/(2*3.14*pow(resLissage, 2)));
+  double frac = (1/(2*PI*pow(resLissage, 2)));
   double somme1 = 0;
   for(int i = -dimMask; i < dimMask; i++){
     double somme0 = 0;
@@ -398,4 +399,154 @@ void printEqm(double* eqmData) {
     printf("%f\n", eqmData[i]);
   }
   printf("\n");
+}
+
+double** lissageGaussien(double variance){
+  double ** filtre = alloue_image_double(3, 3);
+  for(int i = 0; i < 3; i++){
+    for(int j = 0; j < 3; j++){
+      filtre[i][j] = (1/(PI*pow(variance, 4))) * (((pow(i, 2) + pow(j, 2))/(2*pow(variance, 2)))-1) * exp(-((pow(i, 2) + pow(j, 2))/(2*pow(variance, 2))));
+    }
+  }
+  return filtre;
+}
+
+double ** logMasque(double variance){
+  double ** lissage = lissageGaussien(variance);
+  double ** masque = alloue_image_double(3, 3);
+  masque[0][0] = lissage[0][1];
+  masque[0][1] = lissage[0][0] - 4*lissage[0][1] + lissage[0][2];
+  masque[0][2] = lissage[0][1];
+  masque[1][0] = lissage[1][1];
+  masque[1][1] = lissage[1][0] - 4*lissage[1][1] + lissage[1][2];
+  masque[1][2] = lissage[1][1];
+  masque[2][0] = lissage[2][1];
+  masque[2][1] = lissage[2][0] - 4*lissage[2][1] + lissage[2][2];
+  masque[2][2] = lissage[2][1];
+  return masque;
+}
+
+double ** laplacienFiltre(double **ims, int dimx, int dimy){
+  double ** masque = logMasque(4);
+  double** output = alloue_image_double(dimx, dimy);
+  printf("%d %d\n", dimx, dimy);
+  for(int i = 0; i < dimx; i++) {
+    for(int j = 0; j < dimy; j++) {
+      output[i][j] = gradientPixel(ims, i, j, masque, dimx, dimy);
+    }
+  }
+  return output;
+}
+
+void compareEtSupprLapl(double ** ims, int dimx, int dimy, double** lapls) {
+  for(int i = 1; i < dimx-1; i++) {
+    for(int j = 1; j < dimy-1; j++) {
+      if(lapls[i][j] > 0) {
+        if(lapls[i+1][j] >= 0 && lapls[i][j+1] >= 0 && lapls[i][j-1] >= 0 && lapls[i-1][j] >= 0) {
+          ims[i][j] = 0;
+        }
+      }
+      else if(lapls[i][j] < 0) {
+        if(lapls[i+1][j] <= 0 && lapls[i][j+1] <= 0 && lapls[i][j-1] <= 0 && lapls[i-1][j] <= 0) {
+          ims[i][j] = 0;
+        }
+      }
+      else {
+        ims[i][j] = 0;
+      }
+    }
+  }
+}
+
+void compareEtSuppr(double ** ims, int dimx, int dimy, double** grads, double** p1, double** p2) {
+  for(int i = 1; i < dimx-1; i++) {
+    for(int j = 1; j < dimy-1; j++) {
+      if(grads[i][j] <= p1[i][j] || grads[i][j] <= p2[i][j]) {
+        ims[i][j] = 0.;
+      }
+      else if(grads[i][j] < 10) {
+        ims[i][j] = 0.;
+      }
+      else if(grads[i][j] < 80 && (grads[i-1][j] < 80 && grads[i+1][j] < 80 && grads[i][j-1] < 80 && grads[i-1][j+1] < 80 && grads[i][j+1] < 80 && grads[i-1][j-1] < 80 && grads[i+1][j+1] < 80 && grads[i+1][j-1] < 80)) {
+        ims[i][j] = 0.;
+      }
+    }
+  }
+}
+
+void calculGradiantP1P2(double ** ims, int dimx, int dimy, double** grads, double** p1, double** p2, double** masque, double** masque2){
+  for(int i = 1; i < dimx-1; i++) {
+    for(int j = 1; j < dimy-1; j++) {
+      double gradx = gradientPixel(ims, i, j, masque, dimx, dimy);
+      double grady = gradientPixel(ims, i, j, masque2, dimx, dimy);
+      if(gradx != 0) {
+        p1[i][j] = (grady/gradx) * grads[i][j-1] + (gradx - grady)*grads[i+1][j]/gradx;
+        p2[i][j] = (grady/gradx) * grads[i][j+1] + (gradx - grady)*grads[i-1][j]/gradx;
+      }
+      else {
+        p1[i][j] = 0;
+        p2[i][j] = 0;
+      }
+    }
+  }
+}
+
+
+double ** calculGradiant(double ** ims, int dimx, int dimy, double** masque, double** masque2, double** phis){
+  double** grads = alloue_image_double(dimx, dimy);
+  printf("%d %d\n", dimx, dimy);
+  for(int i = 0; i < dimx; i++) {
+    for(int j = 0; j < dimy; j++) {
+      double gradx = 0;
+      double grady = 0;
+      //printf("%d %d\n", i , j);
+      gradx = gradientPixel(ims, i, j, masque, dimx, dimy);
+      grady = gradientPixel(ims, i, j, masque2, dimx, dimy);
+      grads[i][j] = sqrt(pow(gradx, 2) + pow(grady, 2));
+      phis[i][j] = atan(grady/gradx)*180/PI;
+    }
+  }
+  printf("Pixel : %.0f\n", ims[1][1]);
+  printf("\n\n\nGradientx = %.0f\n\n\n", gradientPixel(ims, 1, 1, masque, dimx, dimy));
+  return grads;
+}
+
+double gradientPixel(double** ims, int i, int j, double** masque, int dimx, int dimy) {
+  double grad = 0;
+  grad = grad + masque[0][0] * ims[(i-1+dimx)%dimx][(j-1+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[0][0], ims[(i-1+dimx)%dimx][(j-1+dimy)%dimy], grad);
+  grad = grad + masque[1][0] * ims[(i+dimx)%dimx][(j-1+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[1][0], ims[(i+dimx)%dimx][(j-1+dimy)%dimy], grad);
+  grad = grad + masque[2][0] * ims[(i+1+dimx)%dimx][(j-1+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[2][0], ims[(i+1+dimx)%dimx][(j-1+dimy)%dimy], grad);
+  grad = grad + masque[0][1] * ims[(i-1+dimx)%dimx][(j+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[0][1], ims[(i-1+dimx)%dimx][(j+dimy)%dimy], grad);
+  grad = grad + masque[1][1] * ims[(i+dimx)%dimx][(j+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[1][1], ims[(i+dimx)%dimx][(j+dimy)%dimy], grad);
+  grad = grad + masque[2][1] * ims[(i+1+dimx)%dimx][(j+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[2][1], ims[(i+1+dimx)%dimx][(j+dimy)%dimy], grad);
+  grad = grad + masque[0][2] * ims[(i-1+dimx)%dimx][(j+1+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[0][2], ims[(i-1+dimx)%dimx][(j+1+dimy)%dimy], grad);
+  grad = grad + masque[1][2] * ims[(i+dimx)%dimx][(j+1+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[1][2], ims[(i+dimx)%dimx][(j+1+dimy)%dimy], grad);
+  grad = grad + masque[2][2] * ims[(i+1+dimx)%dimx][(j+1+dimy)%dimy];
+  //printf("facteur : %f * %f = %.0f\n", masque[2][2], ims[(i+1+dimx)%dimx][(j+1+dimy)%dimy]//, grad);
+  //printf("FINI");
+  return grad;
+}
+
+void PrintMat(double** mat, int dimx, int dimy){
+
+  for(unsigned int  i = 0; i < dimy; i++){
+    printf("\n");
+    //printf(" |");
+    for(unsigned int  j = 0; j < dimx; j++){
+      //if(mat[i][j] != 0)
+        printf(" %.5f |", mat[i][j]);
+    }
+    printf("\n");
+
+  }
+  printf("\n");
+
 }

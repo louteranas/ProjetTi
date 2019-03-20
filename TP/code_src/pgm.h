@@ -61,6 +61,15 @@ double *PsnrFiltreGaussien(double** ims_reel, double** ims_imag, double** imd_re
 double* eqmConv(double variance, double** ims, int dimx, int dimy);
 void eqmTotal(double** ims1, double** ims2, int dimx, int dimy, int dimx2, int dimy2);
 void printEqm(double* eqmData);
+double ** calculGradiant(double ** ims, int dimx, int dimy, double** masque, double** masque2, double** phis);
+double gradientPixel(double** ims, int i, int j, double** masque, int dimx, int dimy);
+void PrintMat(double** mat, int dimx, int dimy);
+void calculGradiantP1P2(double ** ims, int dimx, int dimy, double** grads, double** p1, double** p2, double** masque, double** masque2);
+void compareEtSuppr(double ** ims, int dimx, int dimy, double** grads, double** p1, double** p2);
+double** lissageGaussien(double variance);
+double ** laplacienFiltre(double **ims, int dimx, int dimy);
+double ** logMasque(double variance);
+void compareEtSupprLapl(double ** ims, int dimx, int dimy, double** lapls);
 
 
 double** norme(double** real, double** imag, int nl, int nc);
