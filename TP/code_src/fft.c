@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 #include "pgm.h"
 #include "divers.c"
 
@@ -344,18 +345,24 @@ double** cgims(double** ims, int dimMask, double resLissage, int dimx, int dimy)
 }
 
 double* eqmConv(double variance, double** ims, int dimx, int dimy) {
+  clock_t debutCg, finCg, debutFft, finFft;
   double dimMask;
   double* eqmData = NULL;
   eqmData = malloc(6 * sizeof(double));
   double** imsi = alloue_image_double(dimx, dimy);
   double** im1 = alloue_image_double(dimx, dimy);
   double** im1i = alloue_image_double(dimx, dimy);
-
+  debutFft = clock();
   filtrageGaussienImg(ims, imsi, im1, im1i , variance, dimx, dimy);
+  finFft = clock();
+  printf("durée FFT = %f\n", ((double)finFft - debutFft)/CLOCKS_PER_SEC);
   double** im2 = NULL;
   for(int i = 1; i<=6; i++) {
     dimMask = i * variance;
+    debutCg = clock();
     im2 = cgims(ims, dimMask, variance, dimx, dimy);
+    finCg = clock();
+    printf("durée Convolution = %f\n", ((double)finCg - debutCg)/CLOCKS_PER_SEC);  
     eqmData[i-1] = eqm_double(im1, im2, dimx, dimy);
   }
   free(imsi);
