@@ -16,5 +16,9 @@ testConvolution: testConvolution.o pgm.o fft.o
 gradient: gradient.o pgm.o fft.o
 		gcc $^ $(LDFLAGS) -o $@
 
+testTp2: testTp2.o pgm.o fft.o tp2.o
+		gcc $^ $(LDFLAGS) -o $@
+clean:
+	rm *.o
 %.o:%.c
 	gcc $(CFLAGS) $<

@@ -530,7 +530,7 @@ double gradientPixel(double** ims, int i, int j, double** masque, int dimx, int 
   grad = grad + masque[1][2] * ims[(i+dimx)%dimx][(j+1+dimy)%dimy];
   //printf("facteur : %f * %f = %.0f\n", masque[1][2], ims[(i+dimx)%dimx][(j+1+dimy)%dimy], grad);
   grad = grad + masque[2][2] * ims[(i+1+dimx)%dimx][(j+1+dimy)%dimy];
-  //printf("facteur : %f * %f = %.0f\n", masque[2][2], ims[(i+1+dimx)%dimx][(j+1+dimy)%dimy]//, grad);
+  //printf("facteur : %f * %f = %.0f\n", masque[2][2], ims[(i+1+dimx)%dimx][(j+1+dimy)%dimy], grad);
   //printf("FINI");
   return grad;
 }
