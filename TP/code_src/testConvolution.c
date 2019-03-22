@@ -11,7 +11,7 @@ main (int ac, char **av) {  /* av[1] contient le nom de l'image, av[2] le nom du
   //if (ac < 3) {printf("Usage : %s entree sortie \n",av[0]); exit(1); }
 	/* Lecture d'une image pgm dont le nom est passe sur la ligne de commande */
   im1=lectureimagepgm("../imagestp/Archive/formes2g.pgm",&nl,&nc);
-  im2=lectureimagepgm("../imagestp/radio1024.pgm",&nl2,&nc2);
+  im2=lectureimagepgm("../imagestp/radio1.pgm",&nl2,&nc2);
 
   if (im1==NULL)  { puts("Lecture image 1 impossible"); exit(1); }
   if (im2==NULL)  { puts("Lecture image 2 impossible"); exit(1); }

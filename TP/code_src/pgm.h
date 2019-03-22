@@ -71,6 +71,9 @@ double ** laplacienFiltre(double **ims, int dimx, int dimy);
 double ** logMasque(double variance);
 void compareEtSupprLapl(double ** ims, int dimx, int dimy, double** lapls);
 
+//TP2
+double estimBruit(double** ims, int dimx, int dimy, int tailleBlocs, double pourcentile);
+
 
 double** norme(double** real, double** imag, int nl, int nc);
 double** phase(double** real, double** imag, int nl, int nc);
