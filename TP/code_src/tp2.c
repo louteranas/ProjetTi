@@ -4,6 +4,7 @@
 #include "pgm.h"
 
 #define PI 3.14159265
+#define max(X, Y) (((X) < (Y)) ? (Y) : (X))
 
 void PrintVect( double* vect, int taille){
   for(int i = 0; i < taille; i++){
@@ -11,8 +12,10 @@ void PrintVect( double* vect, int taille){
   }
 }
 
-double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int dimx, int dimy, int cumul){
-  *min = 3000;
+// ----------------------------- ESTIMATION DU BRUIT ---------------------------------------------------
+
+double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int dimx, int dimy, int cumul, double pas){
+  *min = 30000000;
   double maxEcr = 0;
   for(int i = 0; i < dimx; i++) {
     for(int j = 0; j < dimy; j++) {
@@ -22,12 +25,12 @@ double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int di
         maxEcr = ecartsLocaux[i][j];
     }
   }
-  *taille = (int)(maxEcr/0.01) - (int)(*min/0.01) + 2;
+  *taille = (int)(maxEcr/pas) - (int)(*min/pas) + 2;
   double *histogramme = NULL;
   histogramme = malloc(*taille*sizeof(double));
   for(int i = 0; i < dimx; i++) {
     for(int j = 0; j < dimy; j++) {
-      int indice =(int)((ecartsLocaux[i][j] - *min)/0.01);
+      int indice =(int)((ecartsLocaux[i][j] - *min)/pas);
       if(cumul == 1){
         for(int i = *taille; i >= indice; i--)
           histogramme[i]++;
@@ -76,7 +79,7 @@ double estimBruit(double** ims, int dimx, int dimy, int tailleBlocs, double pour
   PrintMat(ecartsLocaux, dimx, dimy);
   int taille;
   double min;
-  double *hist = histogrammeCreat(&taille, &min, ecartsLocaux, dimx, dimy, 1);
+  double *hist = histogrammeCreat(&taille, &min, ecartsLocaux, dimx, dimy, 1, 0.01);
   double seuil = dimx * dimy * pourcentile * 0.01;
   printf("seuil = %f\n", seuil);
   printf("taille = %d\n", taille);
@@ -91,9 +94,63 @@ double estimBruit(double** ims, int dimx, int dimy, int tailleBlocs, double pour
   return ecartFinal;
 }
 
+// ----------------------------- FILTRE NLMEANS ---------------------------------------------------
 
-double **filtreMedian(double** ims, int dimx, int dimy, int n) {
-  for(int i = n; i < dimy; i++) {
 
+double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch, double sigma, double h) {
+  //Déclaration des variables temporaires
+  double sommeNum = 0; double sommeDenom = 0;
+  double** wRegion = NULL;
+  double d; double w;
+  double** output = alloue_image_double(dimx, dimy);
+  //Pour tous les pixels de l'image
+  printf("\n");
+  for(int i = 0; i < dimx; i++) {
+    for(int j = 0; j < dimy; j++) {
+      //Pour tous les pixels de la région
+      wRegion = alloue_image_double(2*sizeRegion + 1, 2*sizeRegion + 1);
+      for(int x = i - 2*sizeRegion; x <= i + 2*sizeRegion; x++) {
+        for(int y = j - 2*sizeRegion; y <= j + 2*sizeRegion; y++) {
+          d = calculD(ims, i, j, x, y, dimx, dimy, sizePatch);
+          w = max(d-2*sigma*sigma, 0);
+          w = exp(-(w/h*h));
+          sommeNum += w * ims[(x+dimx)%dimx][(y+dimy)%dimy];
+          sommeDenom += w;
+        }
+      }
+      //Calcul final du pixel
+      output[i][j] = sommeNum /sommeDenom;
+      //On réinitialise les variable temporaires
+      free(*wRegion); free(wRegion);
+      sommeNum = 0; sommeDenom = 0;
+    }
+    printf("%d \n", i);
   }
+  printf("\n");
+  return output;
 }
+
+double calculD(double **ims, int X, int Y, int x, int y, int dimx, int dimy, int sizePatch) {
+  double sommeTemp = 0; double sommeTot = 0;
+  for(int i = -sizePatch; i <= sizePatch; i++) {
+    for(int j = -sizePatch; j <= sizePatch; j++) {
+      sommeTemp += pow(ims[(x+i+dimx)%dimx][(y+j+dimy)%dimy] - ims[(X+i+dimx)%dimx][(Y+j+dimy)%dimy], 2);
+    }
+    sommeTot += sommeTemp;
+  }
+  sommeTot = sommeTot / pow(2*sizePatch + 1, 2);
+  return sommeTot;
+}
+
+// ----------------------------- FILTRE ADAPTATIF RECURSIF---------------------------------------------------
+
+double** adaptRecursif(double** ims, int dimx, int dimy) {
+  
+  return ims;
+}
+
+// ----------------------------- FILTRE BILATERAL ---------------------------------------------------
+
+
+
+// ----------------------------- FILTRE MEDIAN ---------------------------------------------------

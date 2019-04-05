@@ -52,7 +52,7 @@ double psnr(unsigned char **im1, unsigned char **im2,  int nl, int nc) ;
 double psnr_double(double** r, double** i, int nl, int nc);
 double eqm_double(double** r, double** i, int nl, int nc);
 
-
+//TP1
 double** fftFiltreGaussien(double variance, int nl, int nc);
 void filtrageGaussienImg(double** ims_reel, double** ims_imag, double** imd_reel, double** imd_imag , double variance, int dimx, int dimy);
 double** cgims(double** ims, int dimMask, double resLissage, int dimx, int dimy);
@@ -74,7 +74,10 @@ void compareEtSupprLapl(double ** ims, int dimx, int dimy, double** lapls);
 //TP2
 double estimBruit(double** ims, int dimx, int dimy, int tailleBlocs, double pourcentile);
 void PrintVect( double* vect, int taille);
-double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int dimx, int dimy, int cumul);
+double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int dimx, int dimy, int cumul, double pas);
+double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch, double sigma, double h);
+double calculD(double **ims, int X, int Y, int x, int y, int dimx, int dimy, int sizePatch);
+double** adaptRecursif(double** ims, int dimx, int dimy);
 
 
 double** norme(double** real, double** imag, int nl, int nc);
