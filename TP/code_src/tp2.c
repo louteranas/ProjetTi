@@ -40,3 +40,10 @@ double estimBruit(double** ims, int dimx, int dimy, int tailleBlocs, double pour
   PrintMat(ecartsLocaux, dimx, dimy);
   return 1.0;
 }
+
+
+double **filtreMedian(double** ims, int dimx, int dimy, int n) {
+  for(int i = n; i < dimy; i++) {
+
+  }
+}
