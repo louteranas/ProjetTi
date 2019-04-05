@@ -20,5 +20,6 @@ main (int ac, char **av) {  /* av[1] contient le nom de l'image, av[2] le nom du
 	/*  la fft demande des puissances de 2. On padde avec des 0, mais les dimensions nl et nc changent */
   im7=padimdforfft(im3,&nl,&nc);
 
-  estimBruit(im7, nl, nc, 10, 0.5);
+  double ans = estimBruit(im7, nl, nc, 10, 0.5);
+  printf("resultat = %f", ans);
 }

@@ -73,6 +73,8 @@ void compareEtSupprLapl(double ** ims, int dimx, int dimy, double** lapls);
 
 //TP2
 double estimBruit(double** ims, int dimx, int dimy, int tailleBlocs, double pourcentile);
+void PrintVect( double* vect, int taille);
+double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int dimx, int dimy, int cumul);
 
 
 double** norme(double** real, double** imag, int nl, int nc);
