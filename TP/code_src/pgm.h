@@ -77,7 +77,9 @@ void PrintVect( double* vect, int taille);
 double* histogrammeCreat(int* taille, double* min, double** ecartsLocaux, int dimx, int dimy, int cumul, double pas);
 double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch, double sigma, double h);
 double calculD(double **ims, int X, int Y, int x, int y, int dimx, int dimy, int sizePatch);
-double** adaptRecursif(double** ims, int dimx, int dimy);
+double** adaptRecursif(double** ims, int dimx, int dimy, double k);
+double ** bilateral( double ** ims, int dimx, int dimy, double sigma1, double sigma2);
+double ** iterationS( double ** st, int dimx, int dimy, double ** w);
 
 
 double** norme(double** real, double** imag, int nl, int nc);

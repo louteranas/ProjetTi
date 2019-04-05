@@ -104,7 +104,6 @@ double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch
   double d; double w;
   double** output = alloue_image_double(dimx, dimy);
   //Pour tous les pixels de l'image
-  printf("\n");
   for(int i = 0; i < dimx; i++) {
     for(int j = 0; j < dimy; j++) {
       //Pour tous les pixels de la région
@@ -113,7 +112,7 @@ double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch
         for(int y = j - 2*sizeRegion; y <= j + 2*sizeRegion; y++) {
           d = calculD(ims, i, j, x, y, dimx, dimy, sizePatch);
           w = max(d-2*sigma*sigma, 0);
-          w = exp(-(w/h*h));
+          w = exp(-w/(h*h));
           sommeNum += w * ims[(x+dimx)%dimx][(y+dimy)%dimy];
           sommeDenom += w;
         }
@@ -144,12 +143,75 @@ double calculD(double **ims, int X, int Y, int x, int y, int dimx, int dimy, int
 
 // ----------------------------- FILTRE ADAPTATIF RECURSIF---------------------------------------------------
 
-double** adaptRecursif(double** ims, int dimx, int dimy) {
-  
+double** adaptRecursif(double** ims, int dimx, int dimy, double k) {
+  //Déclaration des variables
+  double w;
+  double** w0 = alloue_image_double(dimx, dimy);
+  double** s = alloue_image_double(dimx, dimy);
+  int stationnaire = 0;
+  //Initialisation de w0 et s0
+  for(int i = 0; i < dimx; i++) {
+    for(int j = 0; j < dimy; j++) {
+      s[i][j] = ims[i][j];
+      w = pow(ims[(i+1+dimx)%dimx][j] - ims[(i-1+dimx)%dimx][j], 2) + pow(ims[i][(j+1+dimy)%dimy] - ims[i][(j-1+dimy)%dimy], 2);
+      w0[i][j] = exp(-w/(2*k*k));
+    }
+  }
+  //Itération de s(t+1) jusqu'à image stationnaire
+  // !!!!!!!! à demander la definition d'un filtre stationnaire, car ici boucle infine
+  while(!stationnaire) {
+    s = iterationS(s, dimx, dimy, w0);
+  }
   return ims;
 }
 
+double ** iterationS( double ** st, int dimx, int dimy, double ** w){
+    double ** stNext = alloue_image_double(dimx, dimy);
+    //Initialisation de S
+    for(int x = 0; x < dimx; x++) {
+      for(int y = 0; y < dimy; y++) {
+        double numerateur = 0;
+        double denominateur = 0;
+        for(int i = -1; i <= 1; i++) {
+          for(int j = -1; j <= 1; j++) {
+            numerateur += w[(x+i+dimx)%dimx][(y+j+dimy)%dimy]*st[(x+i+dimx)%dimx][(y+j+dimy)%dimy];
+            denominateur += w[(x+i+dimx)%dimx][(y+j+dimy)%dimy];
+          }
+        }
+        stNext[x][y] = numerateur/denominateur;
+      }
+    }
+    return stNext;
+}
+
 // ----------------------------- FILTRE BILATERAL ---------------------------------------------------
+
+double ** bilateral( double ** ims, int dimx, int dimy, double sigma1, double sigma2){
+    double ** output = alloue_image_double(dimx, dimy);
+    //Initialisation de S
+    for(int x = 0; x < dimx; x++) {
+      for(int y = 0; y < dimy; y++) {
+        double numerateur = 0;
+        double denominateur = 0;
+        double exp1 = 0;
+        double exp3 = 0;
+        int  col = 0;
+        int lig = 0;
+        for(int i = -sigma1*3; i <= sigma1*3; i++) {
+          for(int j = -sigma1*3; j <= sigma1*3; j++) {
+            col = (x+i+dimx)%dimx;
+            lig = (y+j+dimy)%dimy;
+            exp1 = exp(-(i*i+j*j)/(2*pow(sigma1,2)));
+            exp3 = exp(-pow((ims[col][lig]- ims[x][y]), 2)/(2*pow(sigma2,2)));
+            numerateur += exp1*exp3*ims[col][lig];
+            denominateur += exp1*exp3;
+          }
+        }
+        output[x][y] = numerateur/denominateur;
+      }
+    }
+    return output;
+}
 
 
 
