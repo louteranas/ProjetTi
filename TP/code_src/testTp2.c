@@ -19,9 +19,12 @@ int main (int ac, char **av) {  /* av[1] contient le nom de l'image, av[2] le no
   oldnl=nl; oldnc=nc;
 	/*  la fft demande des puissances de 2. On padde avec des 0, mais les dimensions nl et nc changent */
   im7=padimdforfft(im3,&nl,&nc);
-  PrintMat(im7, nl, nc);
-  im5 = nlmeans(im7, nl, nc, 21, 3, 10, 0.40 * 10);
-  PrintMat(im5, nl, nc);
+  //PrintMat(im7, nl, nc);
+  printf("nl, nc = %d, %d\n", oldnl, oldnc);
+  im5 = nlmeans(im7, nl, nc, 10, 1, 10, 4);
+  double psn = psnr_double(im7, im5, nl, nc);
+  printf("psnr : %f\n", psn);
+  //PrintMat(im5, nl, nc);
   ecritureimagepgm(av[2],crop(imdouble2uchar(im5,nl,nc),0,0,oldnl,oldnc),oldnl,oldnc);
   return 1;
 }

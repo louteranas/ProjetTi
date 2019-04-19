@@ -80,6 +80,8 @@ double calculD(double **ims, int X, int Y, int x, int y, int dimx, int dimy, int
 double** adaptRecursif(double** ims, int dimx, int dimy, double k);
 double ** bilateral( double ** ims, int dimx, int dimy, double sigma1, double sigma2);
 double ** iterationS( double ** st, int dimx, int dimy, double ** w);
+double** median(double** ims, int dimx, int dimy, int n);
+int verifStationnaire(double** s, double** scopy, int dimx, int dimy);
 
 
 double** norme(double** real, double** imag, int nl, int nc);

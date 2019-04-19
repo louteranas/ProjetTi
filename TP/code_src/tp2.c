@@ -123,7 +123,7 @@ double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch
       free(*wRegion); free(wRegion);
       sommeNum = 0; sommeDenom = 0;
     }
-    printf("%d \n", i);
+    //printf("%d \n", i);
   }
   printf("\n");
   return output;
@@ -148,24 +148,42 @@ double** adaptRecursif(double** ims, int dimx, int dimy, double k) {
   double w;
   double** w0 = alloue_image_double(dimx, dimy);
   double** s = alloue_image_double(dimx, dimy);
+  double** scopy = alloue_image_double(dimx, dimy);
   int stationnaire = 0;
   //Initialisation de w0 et s0
   for(int i = 0; i < dimx; i++) {
     for(int j = 0; j < dimy; j++) {
       s[i][j] = ims[i][j];
+      scopy[i][j] = ims[i][j];
       w = pow(ims[(i+1+dimx)%dimx][j] - ims[(i-1+dimx)%dimx][j], 2) + pow(ims[i][(j+1+dimy)%dimy] - ims[i][(j-1+dimy)%dimy], 2);
       w0[i][j] = exp(-w/(2*k*k));
     }
   }
   //Itération de s(t+1) jusqu'à image stationnaire
   // !!!!!!!! à demander la definition d'un filtre stationnaire, car ici boucle infine
-  while(!stationnaire) {
+  int compt = 0;
+  while(compt < 50) {
     s = iterationS(s, dimx, dimy, w0);
+    stationnaire = verifStationnaire(s, scopy, dimx, dimy);
+    scopy = s;
+    compt += 1;
   }
-  return ims;
+  printf("compt : %d\n", compt);
+  return s;
 }
 
-double ** iterationS( double ** st, int dimx, int dimy, double ** w){
+int verifStationnaire(double** s, double** scopy, int dimx, int dimy) {
+  for(int i = 0; i < dimx; i++) {
+    for(int j = 0; j < dimy; j++) {
+      if(abs(s[i][j] - scopy[i][j]) > 1) {
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
+double ** iterationS( double ** st, int dimx, int dimy, double** w){
     double ** stNext = alloue_image_double(dimx, dimy);
     //Initialisation de S
     for(int x = 0; x < dimx; x++) {
@@ -186,7 +204,7 @@ double ** iterationS( double ** st, int dimx, int dimy, double ** w){
 
 // ----------------------------- FILTRE BILATERAL ---------------------------------------------------
 
-double ** bilateral( double ** ims, int dimx, int dimy, double sigma1, double sigma2){
+double ** bilateral(double** ims, int dimx, int dimy, double sigma1, double sigma2){
     double ** output = alloue_image_double(dimx, dimy);
     //Initialisation de S
     for(int x = 0; x < dimx; x++) {
@@ -209,6 +227,7 @@ double ** bilateral( double ** ims, int dimx, int dimy, double sigma1, double si
         }
         output[x][y] = numerateur/denominateur;
       }
+      printf("x : %d\n", x);
     }
     return output;
 }
@@ -216,3 +235,13 @@ double ** bilateral( double ** ims, int dimx, int dimy, double sigma1, double si
 
 
 // ----------------------------- FILTRE MEDIAN ---------------------------------------------------
+
+double** median(double** ims, int dimx, int dimy, int n) {
+  //Parcours des lignes-colonnes à partir de la ligne n
+  for(int i = n; i < dimx - n; i++) {
+    for(int j = n; j < dimy - n; j++) {
+
+    }
+  }
+  return ims;
+}
