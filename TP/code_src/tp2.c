@@ -108,8 +108,8 @@ double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch
     for(int j = 0; j < dimy; j++) {
       //Pour tous les pixels de la région
       wRegion = alloue_image_double(2*sizeRegion + 1, 2*sizeRegion + 1);
-      for(int x = i - 2*sizeRegion; x <= i + 2*sizeRegion; x++) {
-        for(int y = j - 2*sizeRegion; y <= j + 2*sizeRegion; y++) {
+      for(int x = i - sizeRegion; x <= i + sizeRegion; x++) {
+        for(int y = j - sizeRegion; y <= j + sizeRegion; y++) {
           d = calculD(ims, i, j, x, y, dimx, dimy, sizePatch);
           w = max(d-2*sigma*sigma, 0);
           w = exp(-w/(h*h));
@@ -123,9 +123,7 @@ double **nlmeans(double** ims, int dimx, int dimy, int sizeRegion, int sizePatch
       free(*wRegion); free(wRegion);
       sommeNum = 0; sommeDenom = 0;
     }
-    //printf("%d \n", i);
   }
-  printf("\n");
   return output;
 }
 
@@ -162,13 +160,12 @@ double** adaptRecursif(double** ims, int dimx, int dimy, double k) {
   //Itération de s(t+1) jusqu'à image stationnaire
   // !!!!!!!! à demander la definition d'un filtre stationnaire, car ici boucle infine
   int compt = 0;
-  while(compt < 50) {
+  while(compt < 100) {
     s = iterationS(s, dimx, dimy, w0);
     stationnaire = verifStationnaire(s, scopy, dimx, dimy);
     scopy = s;
     compt += 1;
   }
-  printf("compt : %d\n", compt);
   return s;
 }
 
@@ -227,7 +224,6 @@ double ** bilateral(double** ims, int dimx, int dimy, double sigma1, double sigm
         }
         output[x][y] = numerateur/denominateur;
       }
-      printf("x : %d\n", x);
     }
     return output;
 }

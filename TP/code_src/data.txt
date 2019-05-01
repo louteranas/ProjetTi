@@ -1,0 +1,28 @@
+-----------  COMPARAISON PSNR / TEMPS SUR IMAGES SYNTHÉTIQUES ----------------------
+
+2p3nl = nlmeans formes2p3 21 3 15 6
+psnr : 32.597785
+temps : 163.222295
+
+2s25nl = nlmeans formes2s25 21 3 15 6
+psnr : 32.765214
+temps : 161.445032
+
+2p3adapt = adaptRecursif formes2p3 10
+psnr : 27.291820
+temps : 1.578532
+
+2s25adapt = adaptRecursif formes2s25 10
+psnr : 26.468554
+temps : 1.593346
+
+2p3bil = bilateral formes2p3 5 5
+psnr : 43.264996
+temps : 5.365677
+
+2s25bil = bilateral formes2s25 5 5
+psnr : 45.151345
+temps : 5.310985
+
+
+------------- COMPARAISON QUALITATIVE -------------------------
